@@ -5,9 +5,9 @@
  * Show Warning for Field Length
  *
  * @category    plugin
- * @version     1.0.2
+ * @version     1.0.3
  * @license     The Unlicense https://unlicense.org/
- * @internal    @properties &fields=Названия полей (параметр name);text;;Перечислить через запятую, длины через двоеточие. Например: pagetitle:64,longtitle:128 &recomendedlength=Показывать рекомендуемую длину поля;list;Yes,No;Yes &maxlength=Также показывать максимальную длину поля;list;Yes,No;Yes
+ * @internal    @properties &fields=Названия полей (параметр name);text;;;Перечислить через запятую, длины через двоеточие. Например: pagetitle:64,longtitle:128 &recomendedlength=Показывать рекомендуемую длину поля;list;Yes,No;Yes &maxlength=Показывать максимальную длину поля;list;Yes,No;Yes
  * @internal    @events OnDocFormPrerender
  * @internal    @modx_category Manager and Admin
  * @reportissues https://github.com/helgispbru/evo-plugin-fieldlengthwarning
