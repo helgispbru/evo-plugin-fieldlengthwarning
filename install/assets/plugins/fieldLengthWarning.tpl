@@ -1,6 +1,6 @@
 //<?php
 /**
- * FieldLengthWarning
+ * Field Length Warning
  *
  * Show Warning for Field Length
  *
