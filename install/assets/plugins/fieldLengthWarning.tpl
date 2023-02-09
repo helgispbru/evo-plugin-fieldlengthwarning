@@ -154,12 +154,9 @@ switch ($e->name) {
                         }
                     }
                 });
-            }
 
-            document.querySelectorAll('[name=" . $name . "]').forEach(el => {
                 el.dispatchEvent(new Event('keyup'));
-            }
-
+            });
             ";
         }
 
