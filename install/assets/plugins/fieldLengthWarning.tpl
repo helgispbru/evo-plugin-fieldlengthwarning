@@ -5,7 +5,7 @@
  * Show Warning for Field Length
  *
  * @category    plugin
- * @version     1.0.5
+ * @version     1.0.6
  * @license     The Unlicense https://unlicense.org/
  * @internal    @properties &fields=Названия полей (параметр name);text;;;Перечислить поля через запятую, длины через двоеточие. Например: pagetitle:32:64,longtitle:64:128 &recomendedlength=Показывать рекомендуемую длину поля;list;Yes,No;Yes &maxlength=Показывать максимальную длину поля;list;Yes,No;Yes
  * @internal    @events OnDocFormPrerender
@@ -52,111 +52,113 @@ switch ($e->name) {
         foreach ($fields as $name => $limits) {
             $rows[] = "
 
-            let el" . $name . " = document.querySelectorAll('[name=" . $name . "]');
+            document.querySelectorAll('[name=" . $name . "]').forEach(el => {
+                if('" . $recomendedlength . "' == 'Yes' || '" . $maxlength . "' == 'Yes') {
+                    let div = document.createElement('div');
 
-            if('" . $recomendedlength . "' == 'Yes' || '" . $maxlength . "' == 'Yes') {
-                let div = document.createElement('div');
+                    let text = ``;
+                    if('" . $recomendedlength . "' == 'Yes') {
+                        text += 'Введено <span class=\"current\">' + el.value.length + plural(el.value.length, ' символ', ' символа', ' символов') + '</span>';
 
-                let text = ``;
-                if('" . $recomendedlength . "' == 'Yes') {
-                    text += 'Введено <span class=\"current\">' + el" . $name . "[0].value.length + plural(el" . $name . "[0].value.length, ' символ', ' символа', ' символов') + '</span>';
+                        if(" . count($limits) . " > 0) {
+                            text += ', рекомендуется';
 
-                    if(" . count($limits) . " > 0) {
-                        text += ', рекомендуется';
-
-                        if(" . count($limits) . " >= 1) {
-                            text += ' от <span class=\"recommend\">' + " . ($limits[0] ?? "el" . $name . "[0].getAttribute('maxlength')") . " + '</span>';
-                        }
-                        if(" . count($limits) . " == 2) {
-                            text += ' до <span class=\"recommend\">' + " . ($limits[1] ?? "el" . $name . "[0].getAttribute('maxlength')") . " + '</span>';
+                            if(" . count($limits) . " >= 1) {
+                                text += ' от <span class=\"recommend\">' + " . ($limits[0] ?? "el.getAttribute('maxlength')") . " + '</span>';
+                            }
+                            if(" . count($limits) . " == 2) {
+                                text += ' до <span class=\"recommend\">' + " . ($limits[1] ?? "el.getAttribute('maxlength')") . " + '</span>';
+                            }
                         }
                     }
-                }
-                if('" . $maxlength . "' == 'Yes' && el" . $name . "[0].getAttribute('maxlength') > 0) {
-                    text += ', максимум <span class=\"max\">' + el" . $name . "[0].getAttribute('maxlength') + '</span>';
-                }
-                div.innerHTML = text;
+                    if('" . $maxlength . "' == 'Yes' && el.getAttribute('maxlength') > 0) {
+                        text += ', максимум <span class=\"max\">' + el.getAttribute('maxlength') + '</span>';
+                    }
+                    div.innerHTML = text;
 
-                el" . $name . "[0].after(div);
+                    el.after(div);
+                }
+
+                el.addEventListener('keyup', () => {
+                    if (el.nextSibling && el.nextSibling.nodeName == 'DIV') {
+                        const length = el.value.length;
+                        const maxlength = el.getAttribute('maxlength');
+
+                        el.nextSibling.getElementsByClassName('current')[0].innerText = length + ' ' + plural(length, 'символ', 'символа', 'символов');
+
+                        switch(" . count($limits) . ") {
+                            /* нет лимитов */
+                            case 0:
+                                el.nextSibling.classList.add('text-secondary');
+                                break;
+                            /* только min */
+                            case 1:
+                                /* меньше */
+                                if(length < " . ($limits[0] ?? "maxlength") . ") {
+                                    if(el.nextSibling.classList.contains('text-success')) {
+                                        el.nextSibling.classList.remove('text-success');
+                                    }
+                                    if(!el.nextSibling.classList.contains('text-warning')) {
+                                        el.nextSibling.classList.add('text-warning');
+                                    }
+                                }
+                                /* больше */
+                                if(length > " . ($limits[0] ?? "maxlength") . ") {
+                                    if(!el.nextSibling.classList.contains('text-success')) {
+                                        el.nextSibling.classList.add('text-success');
+                                    }
+                                    if(el.nextSibling.classList.contains('text-warning')) {
+                                        el.nextSibling.classList.remove('text-warning');
+                                    }
+                                }
+                                break;
+                            /* мин и макс */
+                            case 2:
+                                /* меньше */
+                                if(length < " . ($limits[0] ?? "maxlength") . ") {
+                                    if(el.nextSibling.classList.contains('text-success')) {
+                                        el.nextSibling.classList.remove('text-success');
+                                    }
+                                    if(!el.nextSibling.classList.contains('text-warning')) {
+                                        el.nextSibling.classList.add('text-warning');
+                                    }
+                                    if(el.nextSibling.classList.contains('text-danger')) {
+                                        el.nextSibling.classList.remove('text-danger');
+                                    }
+                                }
+                                /* между */
+                                if(length > " . ($limits[0] ?? "(maxlength - 1)") . " && length < " . ($limits[1] ?? "maxlength") . ") {
+                                    if(!el.nextSibling.classList.contains('text-success')) {
+                                        el.nextSibling.classList.add('text-success');
+                                    }
+                                    if(el.nextSibling.classList.contains('text-warning')) {
+                                        el.nextSibling.classList.remove('text-warning');
+                                    }
+                                    if(el.nextSibling.classList.contains('text-danger')) {
+                                        el.nextSibling.classList.remove('text-danger');
+                                    }
+                                }
+                                /* больше */
+                                if(length > " . ($limits[1] ?? ($limits[0] ?? "maxlength")) . ") {
+                                    if(el.nextSibling.classList.contains('text-success')) {
+                                        el.nextSibling.classList.remove('text-success');
+                                    }
+                                    if(el.nextSibling.classList.contains('text-warning')) {
+                                        el.nextSibling.classList.remove('text-warning');
+                                    }
+                                    if(!el.nextSibling.classList.contains('text-danger')) {
+                                        el.nextSibling.classList.add('text-danger');
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                });
             }
 
-            el" . $name . "[0].addEventListener('keyup', () => {
-                if (el" . $name . "[0].nextSibling && el" . $name . "[0].nextSibling.nodeName == 'DIV') {
-                    const length = el" . $name . "[0].value.length;
-                    const maxlength = el" . $name . "[0].getAttribute('maxlength');
-
-                    el" . $name . "[0].nextSibling.getElementsByClassName('current')[0].innerText = length + ' ' + plural(length, 'символ', 'символа', 'символов');
-
-                    switch(" . count($limits) . ") {
-                        /* нет лимитов */
-                        case 0:
-                            el" . $name . "[0].nextSibling.classList.add('text-secondary');
-                            break;
-                        /* только min */
-                        case 1:
-                            /* меньше */
-                            if(length < " . ($limits[0] ?? "maxlength") . ") {
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-success')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-success');
-                                }
-                                if(!el" . $name . "[0].nextSibling.classList.contains('text-warning')) {
-                                    el" . $name . "[0].nextSibling.classList.add('text-warning');
-                                }
-                            }
-                            /* больше */
-                            if(length > " . ($limits[0] ?? "maxlength") . ") {
-                                if(!el" . $name . "[0].nextSibling.classList.contains('text-success')) {
-                                    el" . $name . "[0].nextSibling.classList.add('text-success');
-                                }
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-warning')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-warning');
-                                }
-                            }
-                            break;
-                        /* мин и макс */
-                        case 2:
-                            /* меньше */
-                            if(length < " . ($limits[0] ?? "maxlength") . ") {
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-success')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-success');
-                                }
-                                if(!el" . $name . "[0].nextSibling.classList.contains('text-warning')) {
-                                    el" . $name . "[0].nextSibling.classList.add('text-warning');
-                                }
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-danger')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-danger');
-                                }
-                            }
-                            /* между */
-                            if(length > " . ($limits[0] ?? "(maxlength - 1)") . " && length < " . ($limits[1] ?? "maxlength") . ") {
-                                if(!el" . $name . "[0].nextSibling.classList.contains('text-success')) {
-                                    el" . $name . "[0].nextSibling.classList.add('text-success');
-                                }
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-warning')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-warning');
-                                }
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-danger')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-danger');
-                                }
-                            }
-                            /* больше */
-                            if(length > " . ($limits[1] ?? ($limits[0] ?? "maxlength")) . ") {
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-success')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-success');
-                                }
-                                if(el" . $name . "[0].nextSibling.classList.contains('text-warning')) {
-                                    el" . $name . "[0].nextSibling.classList.remove('text-warning');
-                                }
-                                if(!el" . $name . "[0].nextSibling.classList.contains('text-danger')) {
-                                    el" . $name . "[0].nextSibling.classList.add('text-danger');
-                                }
-                            }
-                            break;
-                    }
-                }
-            });
-
-            el" . $name . "[0].dispatchEvent(new Event('keyup'));
+            document.querySelectorAll('[name=" . $name . "]').forEach(el => {
+                el.dispatchEvent(new Event('keyup'));
+            }
 
             ";
         }
