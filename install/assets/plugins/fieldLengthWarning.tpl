@@ -5,7 +5,7 @@
  * Show Warning for Field Length
  *
  * @category    plugin
- * @version     1.0.4
+ * @version     1.0.5
  * @license     The Unlicense https://unlicense.org/
  * @internal    @properties &fields=Названия полей (параметр name);text;;;Перечислить поля через запятую, длины через двоеточие. Например: pagetitle:32:64,longtitle:64:128 &recomendedlength=Показывать рекомендуемую длину поля;list;Yes,No;Yes &maxlength=Показывать максимальную длину поля;list;Yes,No;Yes
  * @internal    @events OnDocFormPrerender
@@ -13,7 +13,7 @@
  * @reportissues https://github.com/helgispbru/evo-plugin-fieldlengthwarning
  * @documentation https://github.com/helgispbru/evo-plugin-fieldlengthwarning
  * @author      helgispbru
- * @lastupdate  2022-12-13
+ * @lastupdate  2023-02-09
  */
 if (!isset($fields)) {$fields = '';}
 if (!isset($recomendedlength)) {$recomendedlength = 'Yes';}
@@ -59,10 +59,10 @@ switch ($e->name) {
 
                 let text = ``;
                 if('" . $recomendedlength . "' == 'Yes') {
-                    text += 'Введено <span class=\"current\">' + el" . $name . "[0].value.length + plural(el" . $name . "[0].value.length, ' символ', ' символа', ' символов') + '</span>,';
+                    text += 'Введено <span class=\"current\">' + el" . $name . "[0].value.length + plural(el" . $name . "[0].value.length, ' символ', ' символа', ' символов') + '</span>';
 
                     if(" . count($limits) . " > 0) {
-                        text += ' рекомендуется';
+                        text += ', рекомендуется';
 
                         if(" . count($limits) . " >= 1) {
                             text += ' от <span class=\"recommend\">' + " . ($limits[0] ?? "el" . $name . "[0].getAttribute('maxlength')") . " + '</span>';
@@ -70,12 +70,10 @@ switch ($e->name) {
                         if(" . count($limits) . " == 2) {
                             text += ' до <span class=\"recommend\">' + " . ($limits[1] ?? "el" . $name . "[0].getAttribute('maxlength')") . " + '</span>';
                         }
-
-                        text += ',';
                     }
                 }
                 if('" . $maxlength . "' == 'Yes' && el" . $name . "[0].getAttribute('maxlength') > 0) {
-                    text += ' максимум <span class=\"max\">' + el" . $name . "[0].getAttribute('maxlength') + '</span>';
+                    text += ', максимум <span class=\"max\">' + el" . $name . "[0].getAttribute('maxlength') + '</span>';
                 }
                 div.innerHTML = text;
 
